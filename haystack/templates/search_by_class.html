@@ -1,0 +1,11 @@
+<!-- That's just an example obviously it needs refining -->
+        {% for class_name, instance_list in results.items %}
+		<h2>{{class_name}}</h2>
+		<p>
+			{% for inst in instance_list %}
+				<a href="{{ inst.object.get_absolute_url }}">{{ inst.object}}</a><br />
+			{% empty %}
+				<span>{% trans "No results found." %}</span>
+			{% endfor %}
+		</p>
+	{% endfor %}

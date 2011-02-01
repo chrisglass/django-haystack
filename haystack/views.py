@@ -129,7 +129,6 @@ class SearchView(object):
         context.update(self.extra_context())
         return render_to_response(self.template, context, context_instance=self.context_class(self.request))
 
-
 def search_view_factory(view_class=SearchView, *args, **kwargs):
     def search_view(request):
         return view_class(*args, **kwargs)(request)
@@ -200,3 +199,27 @@ def basic_search(request, template='search/search.html', load_all=True, form_cla
         context.update(extra_context)
     
     return render_to_response(template, context, context_instance=context_class(request))
+
+def search_by_class(request):
+    '''
+    Another more traditional view that relies on a very simple submit form to do its job, and
+    that orders results by their class type.
+
+    See the search/search_by_class.html template to see a use case.    
+
+    TODO: Pagination support
+    '''
+    search_query = request.GET.get('q', '') # Worse case, we will search for ''
+    starred_query = "%s%s" % (search_query, '*') # add a "*" to the search
+    results = SearchQuerySet().filter_or(content=search_query).filter_or(content=starred_query)
+    # Let's build a dict with:
+    # {'classname':[instance1,instance2,...], 'classname2':[...]}
+    by_class = {}
+    for res in results:
+        res_class_name = res.object._meta.verbose_name_plural
+        if res_class_name not in by_class.keys():
+            by_class[res_class_name] = [] # We need to make this entry as a list
+        by_class[res_class_name].append(res)
+        
+    context = {'results': by_class}
+    return render_to_response("search/search_by_class.html", context, RequestContext(request))
